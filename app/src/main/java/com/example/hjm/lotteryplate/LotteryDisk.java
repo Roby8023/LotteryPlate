@@ -53,7 +53,7 @@ public class LotteryDisk extends View {
     /**
      * 旋转一圈所需要的时间.默认500ms
      */
-    private static int mOneCircleDuration = 500;
+    private static int mOneCircleDuration = 600;
     /**
      * 抽奖转盘中条目的个数.默认12个
      */
