@@ -47,9 +47,9 @@ in your layout
 |  maxTurnsNum          |    最多转几圈(实际转的圈数是最值之间的随机数)|
 |   itemCount         |     弧形的个数,只有4种: 6,8,10,12 |
 
-####改抽奖转盘参考了[Nipuream LuckPan](https://github.com/Nipuream/LuckPan),他的实现思路给了我很大启发,感谢!
+###该抽奖转盘参考了[Nipuream LuckPan](https://github.com/Nipuream/LuckPan),他的实现思路给了我很大启发,感谢!
 
-###使用过程中有任何问题,可以随时联系我hjm0908hjm@163.com,欢迎pr!
+###使用过程中有任何问题,可以随时联系我 hjm0908hjm@163.com,欢迎 pr!
 
 
 
