@@ -40,6 +40,8 @@ public class LotteryDisk extends View {
     private String[] strs = {"镭老板白金卡", "雷达宝×1", "套餐优惠铂金券", "锦囊×1", "镭老板白银卡", "套餐优惠银券",
             "免税银卡", "1000元天猫卡", "iPhone 7", "雷达币×1", "免税金卡", "套餐优惠金券"};
 
+    private ValueAnimator mAnimtor;
+    private AnimationEndListener listener;
     /**
      * 从0开始,偶数圆弧的背景色
      */
@@ -90,13 +92,9 @@ public class LotteryDisk extends View {
     private Paint mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private int mTextColor = Color.parseColor("#935f64");
     private int mTextSize;
-
-    private ValueAnimator mAnimtor;
-    private AnimationEndListener listener;
     private int mPadding;
     private int mInitAngle = 0;
     private boolean isRotating;
-
 
     public LotteryDisk(Context context) {
         this(context, null);
@@ -213,7 +211,6 @@ public class LotteryDisk extends View {
             drawText(mInitAngle, strs[i], getMeasuredWidth() - mPadding * 2, mTextPaint, canvas, mRectF);
             mInitAngle += mSweepAngle;
         }
-
     }
 
     /**
@@ -267,12 +264,11 @@ public class LotteryDisk extends View {
      * @param pos 如果 pos = -1 则随机，如果指定某个值，则转到某个指定区域
      */
     public void startRotate(int pos) {
-        if (isRotating) {
-            return;
+        if (isRotating) return;
+        if (pos >= mItemCount){
+            throw new IllegalArgumentException("the position must not >= item count");
         }
-        if (pos >= mItemCount) {
-            throw new IllegalArgumentException("the position must not >= the plate's item count");
-        }
+
         int lap = (int) (mMinTurnsCount + Math.random() * (mMaxTurnsCount - mMinTurnsCount + 1));//产生15-18之间的int型随机数
 
         int angle = getLastCircleAngle(pos);
@@ -288,7 +284,7 @@ public class LotteryDisk extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 int updateValue = (int) animation.getAnimatedValue();
-                mInitAngle = (updateValue % 360 + 360) % 360;
+                mInitAngle = updateValue % 360;
                 ViewCompat.postInvalidateOnAnimation(LotteryDisk.this);
             }
         });
@@ -301,7 +297,6 @@ public class LotteryDisk extends View {
             @Override
             public void onAnimationEnd(Animator animation) {
                 isRotating = false;
-                Log.e(TAG, "onAnimationEnd后到达的initAngle: " + mInitAngle);
                 if (listener != null) {
                     listener.endAnimation(queryPosition());
                 }
@@ -311,7 +306,7 @@ public class LotteryDisk extends View {
     }
 
     /**
-     * 计算随机旋转多少角度
+     * 计算随机旋转到多少角度
      *
      * @param lap   随机数
      * @param angle 最后一圈实际旋转的角度
@@ -321,15 +316,15 @@ public class LotteryDisk extends View {
         //要旋转的角度
         int increaseDegree = lap * 360 + angle;
         //要旋转到的角度
-        int DesRotate = increaseDegree + mInitAngle;
+        int desRotate = increaseDegree + mInitAngle;
 
         //为了每次都能旋转到转盘的中间位置
-        int offRotate = (int) (DesRotate % 360 % mSweepAngle);
-        DesRotate -= offRotate;
+        int offRotate = (int) (desRotate % 360 % mSweepAngle);
+        desRotate -= offRotate;
         if (mItemCount == 8 || mItemCount == 12) {
-            DesRotate += mSweepAngle / 2;//改变这个值可以控制转盘停止时指针的位置
+            desRotate += mSweepAngle / 2;//改变这个值可以控制转盘停止时指针的位置
         }
-        return DesRotate;
+        return desRotate;
     }
 
     /**
@@ -357,13 +352,9 @@ public class LotteryDisk extends View {
     }
 
     private int queryPosition() {
-        mInitAngle = (mInitAngle % 360 + 360) % 360;
+        mInitAngle = mInitAngle % 360;
         int pos = (int) (mInitAngle / mSweepAngle);
-        Log.e(TAG, "queryPosition: " + pos);
-        return calcumPosition(pos);
-    }
-
-    private int calcumPosition(int pos) {
+        Log.e(TAG, "mInitAngle: " + mInitAngle+"; pos: "+pos);
         if (pos >= 0 && pos <= mCriticalPosition) {
             pos = mCriticalPosition - pos;
         } else {
@@ -395,5 +386,4 @@ public class LotteryDisk extends View {
         super.onDetachedFromWindow();
         clearAnimation();
     }
-
 }

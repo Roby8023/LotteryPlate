@@ -30,7 +30,10 @@
         app:textColor="@color/colorAccent"
         app:textSize="11sp"
         app:eventArcBgColor="@android:color/darker_gray"
-        app:itemCount="twelve"/>
+        app:oneCircleDuration="500"
+        app:minTurnsNum="10"
+        app:maxTurnsNum="14"
+        app:itemCount="six"/>
 
     <ImageView
         android:id="@+id/activity_lotteryplate_go"

@@ -11,6 +11,8 @@ import android.widget.Toast;
 
 import com.example.hjm.lotteryplate.LotteryDisk;
 
+import static com.example.lotteryplatesample.R.id.stopPosition;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -26,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mLotteryDisk = (LotteryDisk) findViewById(R.id.activity_lotteryplate_rotatePan);
-        mEditText = (EditText) findViewById(R.id.stopPosition);
+        mEditText = (EditText) findViewById(stopPosition);
         mGo = (ImageView) findViewById(R.id.activity_lotteryplate_go);
     }
 
@@ -36,7 +38,8 @@ public class MainActivity extends AppCompatActivity {
         mGo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (TextUtils.isEmpty(mEditText.getText().toString().trim())) {
+                String pos = mEditText.getText().toString().trim();
+                if (TextUtils.isEmpty(pos)) {
                     Toast.makeText(MainActivity.this, "请输入position", Toast.LENGTH_SHORT).show();
                     return;
                 }
