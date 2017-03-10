@@ -7,5 +7,22 @@
         <attr name="oddArcBgColor" format="color"/>
         <attr name="textColor" format="color"/>
         <attr name="textSize" format="dimension"/>
+        <!--最少旋转的圈数-->
+        <attr name="minTurnsNum" format="integer"/>
+        <!--最大旋转的圈数-->
+        <attr name="maxTurnsNum" format="integer"/>
+        <!--旋转一圈所需时间-->
+        <attr name="oneCircleDuration" format="integer"/>
+        <!--转盘条目的个数-->
+        <attr name="itemCount" format="enum">
+            <!--6个-->
+            <enum name="six" value="6"/>
+            <!--8个-->
+            <enum name="eight" value="8"/>
+            <!--10个-->
+            <enum name="ten" value="10"/>
+            <!--12个-->
+            <enum name="twelve" value="12"/>
+        </attr>
     </declare-styleable>
 </resources>

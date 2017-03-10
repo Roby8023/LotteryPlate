@@ -30,15 +30,6 @@ import static android.content.ContentValues.TAG;
  */
 public class LotteryDisk extends View {
 
-    private Paint mEventPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private Paint mOddPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private Paint mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private int mEventArcBgColor = Color.parseColor("#34c3ff");
-    private int mOddArcBgColor = Color.WHITE;
-    private int mTextColor = Color.parseColor("#935f64");
-    private int mTextSize;
-    private int InitAngle = 15;
-
     private int[] images = new int[]{R.mipmap.ic_lotteryplate_radarboss_goldcard, R.mipmap.ic_lotteryplate_vrp,
             R.mipmap.ic_lotteryplate_discount_cardc, R.mipmap.ic_lotteryplate_secret,
             R.mipmap.ic_lotteryplate_radarboss_silvercard, R.mipmap.ic_lotteryplate_discount_carda,
@@ -49,17 +40,26 @@ public class LotteryDisk extends View {
     private String[] strs = {"镭老板白金卡", "雷达宝×1", "套餐优惠铂金券", "锦囊×1", "镭老板白银卡", "套餐优惠银券",
             "免税银卡", "1000元天猫卡", "iPhone 7", "雷达币×1", "免税金卡", "套餐优惠金券"};
 
-    private List<Bitmap> bitmaps = new ArrayList<>();
     /**
-     * 旋转一圈所需要的时间
+     * 从0开始,偶数圆弧的背景色
      */
-    private static final long ONE_WHEEL_TIME = 500;
+    private int mEventArcBgColor = Color.parseColor("#34c3ff");
+    /**
+     * 奇数圆弧的背景色
+     */
+    private int mOddArcBgColor = Color.WHITE;
+    /**
+     * 旋转一圈所需要的时间.默认500ms
+     */
+    private static int mOneCircleDuration = 500;
+    /**
+     * 抽奖转盘中条目的个数.默认12个
+     */
     private int mItemCount = 12;
-    private float mSweepAngle = 360 / mItemCount;
-    private int mCenter;
-    private ValueAnimator mAnimtor;
-    private AnimationEndListener listener;
-    private int mPadding;
+    /**
+     * 每个弧形跨过的角度
+     */
+    private float mSweepAngle;
     /**
      * 圆盘的半径
      */
@@ -72,6 +72,29 @@ public class LotteryDisk extends View {
      * 中奖的position.这个position是根据initAngle(开始的角度)斤算出来的,在转盘转动的过程中不变,其值只与开始的角度有关.
      */
     private int mCriticalPosition;
+    /**
+     * 中心点X坐标
+     */
+    private int mCenter;
+    /**
+     * 最少旋转的圈数
+     */
+    private int mMinTurnsCount = 15;
+    /**
+     * 最大旋转的圈数
+     */
+    private int mMaxTurnsCount = 18;
+    private List<Bitmap> bitmaps = new ArrayList<>();
+    private Paint mEventPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private Paint mOddPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private Paint mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private int mTextColor = Color.parseColor("#935f64");
+    private int mTextSize;
+
+    private ValueAnimator mAnimtor;
+    private AnimationEndListener listener;
+    private int mPadding;
+    private int mInitAngle = 0;
     private boolean isRotating;
 
 
@@ -86,11 +109,35 @@ public class LotteryDisk extends View {
     public LotteryDisk(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.LotteryDisk);
-        mEventArcBgColor = typedArray.getColor(R.styleable.LotteryDisk_eventArcBgColor,mEventArcBgColor);
-        mOddArcBgColor = typedArray.getColor(R.styleable.LotteryDisk_eventArcBgColor,mOddArcBgColor);
-        mTextColor = typedArray.getColor(R.styleable.LotteryDisk_textColor,mTextColor);
-        mTextSize = typedArray.getDimensionPixelSize(R.styleable.LotteryDisk_textSize, (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 12,getResources().getDisplayMetrics()));
+        mEventArcBgColor = typedArray.getColor(R.styleable.LotteryDisk_eventArcBgColor, mEventArcBgColor);
+        mOddArcBgColor = typedArray.getColor(R.styleable.LotteryDisk_oddArcBgColor, mOddArcBgColor);
+        mTextColor = typedArray.getColor(R.styleable.LotteryDisk_textColor, mTextColor);
+        mTextSize = typedArray.getDimensionPixelSize(R.styleable.LotteryDisk_textSize, (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 12, getResources().getDisplayMetrics()));
+        mMinTurnsCount = typedArray.getInt(R.styleable.LotteryDisk_minTurnsNum, mMinTurnsCount);
+        mMaxTurnsCount = typedArray.getInt(R.styleable.LotteryDisk_minTurnsNum, mMaxTurnsCount);
+        mOneCircleDuration = typedArray.getInt(R.styleable.LotteryDisk_oneCircleDuration, mOneCircleDuration);
+        int itemCountFlag = typedArray.getInt(R.styleable.LotteryDisk_itemCount, 6);
+        switch (itemCountFlag) {
+            case 6:
+                mItemCount = 6;
+                mInitAngle = 0;
+                break;
+            case 8:
+                mItemCount = 8;
+                mInitAngle = 23;
+                break;
+            case 10:
+                mItemCount = 10;
+                mInitAngle = 0;
+                break;
+            case 12:
+                mItemCount = 12;
+                mInitAngle = 15;
+                break;
+        }
         typedArray.recycle();
+
+        mSweepAngle = 360 / mItemCount;
 
         init();
     }
@@ -136,15 +183,14 @@ public class LotteryDisk extends View {
         mRectF = new RectF(getPaddingLeft(), getPaddingTop(), getMeasuredWidth() - getPaddingRight(), getMeasuredHeight() - getPaddingBottom());
 
         //中奖的position
-        mCriticalPosition = (int) ((270 - mSweepAngle / 2 - InitAngle) / mSweepAngle);
-
+        mCriticalPosition = (int) ((270 - mSweepAngle / 2 - mInitAngle) / mSweepAngle);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        int angle = InitAngle;
+        int angle = mInitAngle;
 
         // 绘制圆弧
         for (int i = 0; i < mItemCount; i++) {
@@ -158,14 +204,14 @@ public class LotteryDisk extends View {
 
         //绘制图标
         for (int i = 0; i < mItemCount; i++) {
-            drawIcon(radius, InitAngle, i, canvas);
-            InitAngle += mSweepAngle;
+            drawIcon(radius, mInitAngle, i, canvas);
+            mInitAngle += mSweepAngle;
         }
 
         //绘制文字
         for (int i = 0; i < mItemCount; i++) {
-            drawText(InitAngle, strs[i], getMeasuredWidth() - mPadding * 2, mTextPaint, canvas, mRectF);
-            InitAngle += mSweepAngle;
+            drawText(mInitAngle, strs[i], getMeasuredWidth() - mPadding * 2, mTextPaint, canvas, mRectF);
+            mInitAngle += mSweepAngle;
         }
 
     }
@@ -227,22 +273,22 @@ public class LotteryDisk extends View {
         if (pos >= mItemCount) {
             throw new IllegalArgumentException("the position must not >= the plate's item count");
         }
-        int lap = (int) (15 + Math.random() * (18 - 15 + 1));//产生15-18之间的int型随机数
+        int lap = (int) (mMinTurnsCount + Math.random() * (mMaxTurnsCount - mMinTurnsCount + 1));//产生15-18之间的int型随机数
 
-        int angle = getAngle(pos);
+        int angle = getLastCircleAngle(pos);
 
         int DesRotate = getDesRotate(lap, angle);
 
-        long time = (lap + angle / 360) * ONE_WHEEL_TIME;
+        long time = (lap + angle / 360) * mOneCircleDuration;
 
-        mAnimtor = ValueAnimator.ofInt(InitAngle, DesRotate);
+        mAnimtor = ValueAnimator.ofInt(mInitAngle, DesRotate);
         mAnimtor.setInterpolator(new AccelerateDecelerateInterpolator());
         mAnimtor.setDuration(time);
         mAnimtor.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 int updateValue = (int) animation.getAnimatedValue();
-                InitAngle = (updateValue % 360 + 360) % 360;
+                mInitAngle = (updateValue % 360 + 360) % 360;
                 ViewCompat.postInvalidateOnAnimation(LotteryDisk.this);
             }
         });
@@ -255,7 +301,7 @@ public class LotteryDisk extends View {
             @Override
             public void onAnimationEnd(Animator animation) {
                 isRotating = false;
-                Log.e(TAG, "onAnimationEnd后到达的initAngle: " + InitAngle);
+                Log.e(TAG, "onAnimationEnd后到达的initAngle: " + mInitAngle);
                 if (listener != null) {
                     listener.endAnimation(queryPosition());
                 }
@@ -275,12 +321,14 @@ public class LotteryDisk extends View {
         //要旋转的角度
         int increaseDegree = lap * 360 + angle;
         //要旋转到的角度
-        int DesRotate = increaseDegree + InitAngle;
+        int DesRotate = increaseDegree + mInitAngle;
 
-        //TODO 为了每次都能旋转到转盘的中间位置
+        //为了每次都能旋转到转盘的中间位置
         int offRotate = (int) (DesRotate % 360 % mSweepAngle);
         DesRotate -= offRotate;
-        DesRotate += mSweepAngle / 2;//改变这个值可以控制转盘停止时指针的位置
+        if (mItemCount == 8 || mItemCount == 12) {
+            DesRotate += mSweepAngle / 2;//改变这个值可以控制转盘停止时指针的位置
+        }
         return DesRotate;
     }
 
@@ -290,7 +338,7 @@ public class LotteryDisk extends View {
      * @param pos
      * @return
      */
-    private int getAngle(int pos) {
+    private int getLastCircleAngle(int pos) {
         int angle = 0;
         if (pos < 0) {
             angle = (int) (Math.random() * 360);
@@ -298,7 +346,6 @@ public class LotteryDisk extends View {
             int initPos = queryPosition();
             if (pos > initPos) {
                 angle = 360 - (int) ((pos - initPos) * mSweepAngle);
-//                lap -= 1;
             } else if (pos < initPos) {
                 angle = (int) ((initPos - pos) * mSweepAngle);
             } else {
@@ -310,13 +357,13 @@ public class LotteryDisk extends View {
     }
 
     private int queryPosition() {
-        InitAngle = (InitAngle % 360 + 360) % 360;
-        int pos = (int) (InitAngle / mSweepAngle);
+        mInitAngle = (mInitAngle % 360 + 360) % 360;
+        int pos = (int) (mInitAngle / mSweepAngle);
         Log.e(TAG, "queryPosition: " + pos);
-        return calcumAngle(pos);
+        return calcumPosition(pos);
     }
 
-    private int calcumAngle(int pos) {
+    private int calcumPosition(int pos) {
         if (pos >= 0 && pos <= mCriticalPosition) {
             pos = mCriticalPosition - pos;
         } else {
@@ -347,12 +394,6 @@ public class LotteryDisk extends View {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         clearAnimation();
-    }
-
-    public void setRotate(int rotation) {
-        rotation = (rotation % 360 + 360) % 360;
-        InitAngle = rotation;
-        ViewCompat.postInvalidateOnAnimation(this);
     }
 
 }
