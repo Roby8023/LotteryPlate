@@ -42,7 +42,8 @@ in your layout
 |  textColor            |   文字颜色              |
 |  textSize            |    文字大小              |
 | eventArcBgColor       |   偶数弧形的背景色        |
-| oneCircleDuration     |   奇数弧形的背景色        |
+| oddArcBgColor         |   奇数弧形的背景色       |
+| oneCircleDuration     |   转一圈的时长       |
 |  minTurnsNum          |    最少转几圈           |
 |  maxTurnsNum          |    最多转几圈(实际转的圈数是最值之间的随机数)|
 |   itemCount         |     弧形的个数,只有4种: 6,8,10,12 |
